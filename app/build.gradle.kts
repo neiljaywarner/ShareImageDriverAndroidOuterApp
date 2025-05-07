@@ -20,20 +20,18 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = false // Keep false for easier debugging of release issues first
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
         debug {
-            // ensure applicationIdSuffix is not set if you want to use the same FlutterEngineCache
-            // applicationIdSuffix = ".debug"
+            // applicationIdSuffix = ".debug" // Keep commented for consistent FlutterEngineCache
         }
-        // Add profile build type as recommended by flutter build aar output
-        create("profile") {
-            initWith(getByName("debug"))
-        }
+        // The 'profile' build type is typically managed by the Flutter build process itself
+        // when depending on project(":flutter"). No need to declare it here unless specifically required
+        // for other native (non-Flutter) parts of the app and it aligns with Flutter's profile builds.
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -44,6 +42,17 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    sourceSets {
+        getByName("main") {
+            // Ensure this path correctly points to where Pigeon generates Java files
+            // within your Flutter module structure.
+            // Standard path for a module is .android/app/src/main/java
+            java.srcDirs(
+                "src/main/java",
+                "../receive_images_flutter_demo/.android/app/src/main/java"
+            )
+        }
     }
 }
 
@@ -57,20 +66,10 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-    // Flutter module dependencies via AARs
-    // These configurations directly reference the AARs built by `flutter build aar`
-    // and expect their transitive dependencies to be resolved from the repositories
-    // configured in settings.gradle.kts (which includes the local Flutter repo).
-    debugImplementation("com.example.receive_images_flutter_demo:flutter_debug:1.0") {
-        // If the AAR itself has issues with its published POM and transitive dependencies,
-        // this might be needed, but typically isn't for Flutter AARs.
-        // isTransitive = false 
-    }
-    releaseImplementation("com.example.receive_images_flutter_demo:flutter_release:1.0") {
-        // isTransitive = false
-    }
-    // If using a profile build type that consumes a Flutter profile AAR:
-    // add("profileImplementation", "com.example.receive_images_flutter_demo:flutter_profile:1.0")
+    // Flutter module dependency as a source project
+    // This relies on settings.gradle.kts correctly including the Flutter module
+    // via include_flutter.groovy, which defines the ":flutter" project.
+    implementation(project(":flutter"))
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

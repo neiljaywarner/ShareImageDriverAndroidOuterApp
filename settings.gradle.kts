@@ -16,7 +16,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // Add the local Flutter AAR repository
+        // Local Flutter repo - include_flutter.groovy might also add this or similar
+        // It's generally safe to keep if Flutter's build process also uses it.
         maven {
             url = uri("../receive_images_flutter_demo/build/host/outputs/repo")
         }
@@ -26,15 +27,14 @@ dependencyResolutionManagement {
 rootProject.name = "ShareImageDriverAndroidOuterApp"
 include(":app")
 
-// Include the Flutter module. The path should be relative to settings.gradle.kts
-// The include_flutter.groovy script handles the setup of the :flutter project
-val flutterProjectRoot = settingsDir.parentFile.resolve("receive_images_flutter_demo")
-val flutterIncludeGroovy = flutterProjectRoot.resolve(".android/include_flutter.groovy")
+// Apply the Flutter include script to define the :flutter project
+val flutterProjectRoot =
+    settingsDir.parentFile.resolve("receive_images_flutter_demo") // Assuming it's a sibling
+val flutterModuleAndroidDir = flutterProjectRoot.resolve(".android") // Standard for Flutter modules
+val flutterIncludeGroovy = flutterModuleAndroidDir.resolve("include_flutter.groovy")
+
 if (flutterIncludeGroovy.exists()) {
     apply(from = flutterIncludeGroovy)
 } else {
-    // Fallback or error if script not found - though flutter build aar should ensure it's there for module type.
-    // For now, we assume direct AAR consumption if script is missing and :flutter project isn't defined by it.
-    // However, the AAR approach below in app/build.gradle.kts is more direct for pre-built AARs.
-    println("Flutter include script not found at: ${flutterIncludeGroovy.absolutePath}. Ensure Flutter module is correctly structured or use direct AAR dependency.")
+    throw GradleException("Flutter include script not found at: ${flutterIncludeGroovy.absolutePath}. This is required for the source code dependency approach. Ensure 'receive_images_flutter_demo' is a Flutter module and is a sibling to this project.")
 }
